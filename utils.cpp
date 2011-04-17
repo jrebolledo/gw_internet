@@ -1637,6 +1637,10 @@ void checkQueueandServe() {
         Serial1.println("\t(MAXQ_CALI)");
         passingPacketToNode();
         break;
+      case RESET_SLAVES_METHOD:
+        Serial1.println("\t(RESET SLAVES)");
+        passingPacketToNode();
+        break;
       default:
         Serial1.println("\tTCP Method not recognized:");
         break;

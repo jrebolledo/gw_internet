@@ -69,6 +69,7 @@
 //SERVER
 #define ECHO_METHOD 70 // gateway  --> server
 #define IDENTIFY_METHOD 0 
+#define RESET_SLAVES_METHOD 128 // this method will reset all slaves connected to TX
 
 #define BUSY_METHOD 68 // send by gateway to server when QUEUE are full 
 #define BUSY_METHOD 200
