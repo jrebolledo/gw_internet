@@ -858,6 +858,12 @@ void processingRelayRefresh(long int MAC1,long int MAC2) {
   
   // extract dev id, from slot params[0]
   relay_temp1 = searchDevIdBySlotandMAC(MAC1,MAC2,ppzigbee.params[0],2); // saving type (1): MAXQ, (2): Rele, (3):SenTemp, (4):SenLighting
+  if (relay_temp1==0) { // check if node is registered in gateway
+    Serial1.println("\t(RELAY)dev not found. TODDING");
+    processingTOD(MAC1,MAC2);
+    relay_temp1 = searchDevIdBySlotandMAC(MAC1,MAC2,ppzigbee.params[0],2); // saving type (1): MAXQ, (2): Rele, (3):SenTemp, (4):SenLighting
+  }
+  
   if (relay_temp1!=0) { // check if node is registered in gateway
     ppzigbee.params[0] = relay_temp1; // override slot with first devid founded;
     // build server packet with relays state
@@ -889,10 +895,10 @@ void processingRelayRefresh(long int MAC1,long int MAC2) {
     }
     
   }
-  else {// join to network, this is useful in case gateway reset
-    Serial1.println("\t(RELAY)dev not found");
-    processingTOD(MAC1,MAC2);
+  else {
+    Serial1.println("\t(RELAY)dev not found.Discard");
   }
+
 }
 
 boolean checkNewZigbeeRequest() {
@@ -1133,13 +1139,20 @@ void processingASYNC(long int MAC1,long int MAC2, byte type) {
     char purestring[1] = {0};
     byte devid;
     byte typeofdevice;
+    byte shift=0;
     // type_dict = {'RLS8':2,'MAXQ':1,'TMP':3,'LGH':4}
     if (type == 1) { // slot 1 has TMP
       typeofdevice = TEMP_TYPE;
+      shift = 2;
     }else { // slot 2 has LGH
       typeofdevice = LIGHT_TYPE;      
+      shift = 0;
     }
     
+    for (byte t=0;t<MAX_SIGNALS_MEASUREMENT_BUFFER;t++) {
+       ppzigbee.params[1+t] = ppzigbee.params[1+t]>>shift; // 
+    }
+        
     devid = searchDevIdBySlotandMAC(MAC1,MAC2, ppzigbee.params[0], typeofdevice);
     if (devid == 0) { // not found, has to server for its definition
       Serial1.println("\t(ASYNC)AskNodeDefinitionToServer");
@@ -1474,6 +1487,7 @@ void processingEECmd() {
 void passingPacketToNode() {
   byte node = getnodeDefinitionFromdevID(ppserver.params[0]);
   if (node == 255) {// no esta conectado 
+    Serial1.println("\t node not linked");
     return;
   }
   else {
