@@ -671,7 +671,20 @@ boolean sendPacketToZigbeeNodeandParseResponse(int opID,long int zigbeetimeout,l
   for (byte w=0;w<tries;w++) {
     Serial1.print("\t(TXRXZB)Target: ");Serial1.print(MAC_MSB,DEC);Serial1.print(" - ");Serial1.println(MAC_LSB,DEC);
     Serial1.print("\t(TXRXZB)Try#:");Serial1.print(w,DEC);Serial1.print(" DATA:");printuint8ArrayasDEC(payload,(int)zbTx.getPayloadLength());
+    
+    // check input zb buffer
+    if (xbee.readPacket(zigbeetimeout)) {
+      Serial1.println("\t(TXRXZB)CheckZBBuffer");
+      if (xbee.getResponse().isAvailable()) {
+        if (xbee.getResponse().getApiId() == ZB_RX_RESPONSE) {
+          xbee.getResponse().getZBRxResponse(rx); 
+          // check if packet is from the target
+          ppzigbee = parseZigbeePacket(rx.getData(), rx.getDataLength());
 
+        }
+      }
+    }
+    
     xbee.send(zbTx);  // sending payload to destination, waiting for response an parse
     
     // waiting for ack status
@@ -691,8 +704,10 @@ boolean sendPacketToZigbeeNodeandParseResponse(int opID,long int zigbeetimeout,l
               changeNodeState(nodeindex,0); // set the node offline
               Serial1.println("\t\t(TXRXZB)TXerror.Probablyoffline");
            }
-        } 
+        }
+        
       }
+      
     }
     else {
       // codigos de error
@@ -1140,17 +1155,25 @@ void processingASYNC(long int MAC1,long int MAC2, byte type) {
     byte devid;
     byte typeofdevice;
     byte shift=0;
+    boolean inv;
     // type_dict = {'RLS8':2,'MAXQ':1,'TMP':3,'LGH':4}
     if (type == 1) { // slot 1 has TMP
       typeofdevice = TEMP_TYPE;
+      inv = false;
       shift = 2;
     }else { // slot 2 has LGH
       typeofdevice = LIGHT_TYPE;      
+      inv = true;
       shift = 0;
     }
     
     for (byte t=0;t<MAX_SIGNALS_MEASUREMENT_BUFFER;t++) {
-       ppzigbee.params[1+t] = ppzigbee.params[1+t]>>shift; // 
+      if (inv) {
+        ppzigbee.params[1+t] = 255-(ppzigbee.params[1+t]>>shift); //         
+      }
+      else {
+        ppzigbee.params[1+t] = (ppzigbee.params[1+t]>>shift); //         
+      }
     }
         
     devid = searchDevIdBySlotandMAC(MAC1,MAC2, ppzigbee.params[0], typeofdevice);
@@ -1211,7 +1234,6 @@ void processingASYNC(long int MAC1,long int MAC2, byte type) {
     }
     
     Serial1.println("\t(ASYNC)SendtoRelays");
-
     for (byte g=0;g<MAX_NODES;g++) {
       for (int slot=0;slot<nodeDefinition[g].slotsnum;slot++) {
         for (int u=0;u<IDS_NODES_MAX;u++) {
@@ -1571,11 +1593,6 @@ void checkQueueandServe() {
       case RELE_REGLA_CONTROL_METHOD:
         confirmRuleSaved();
         break;
-        
-      //case RELE_MEDICION_SENSORES_METHOD: // if a relay is asking for a measurement
-      //  Serial1.println("\t(CONTROL MEAS)");
-      //  processingMeasRequest(MAC1,MAC2);
-      //  break;
       case MAXQ_UPDATE_DATETIME_METHOD: // if a node ask for time
         Serial1.println("\t(ASKING TIME)");
         processingTimeRequest(MAC1,MAC2);
