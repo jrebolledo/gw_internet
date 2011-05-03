@@ -7,13 +7,20 @@
 #include <Ethernet.h>
 #include <string.h>
 #include <XBee.h>
-#include <EthernetDHCP.h>
+#if (DHCP)
+  #include <EthernetDHCP.h>
+#endif
 #include <EthernetDNS.h>
 //#include <avr/wdt.h> 
 // declaración de variables externas extern
 extern Client client;
 extern int Ethernet_reset_pin;
 extern byte server[4];
+#if (!DHCP)
+  extern byte ip[];
+  extern byte gateway[];
+  extern byte sub[];
+#endif
 extern byte mac[];
 extern byte dnsServerIp[];
 extern nodeDef nodeDefinition[MAX_NODES];
@@ -271,6 +278,7 @@ boolean resolveServerIP() {
     Serial1.println(".");
     dns_resolved = true;
     isconnectedtoserver = true; // there is internet connection
+    //isconnectedtoserver = false;
     return dns_resolved;
   } else if (DNSTimedOut == err) {
     Serial1.println("\t(DNS)Timedout");
@@ -284,7 +292,7 @@ boolean resolveServerIP() {
 
   return dns_resolved;
 }
-
+#if (DHCP)
 boolean checkDHCP() {
   static DhcpState prevState = DhcpStateNone;
   static unsigned long prevTime = 0;
@@ -341,7 +349,7 @@ boolean checkDHCP() {
   }
 
 }
-
+#endif
 void getMyZBMac(byte* mac) {
   uint8_t shCmd[] = {'S','H'};
   uint8_t slCmd[] = {'S','L'};
@@ -397,6 +405,7 @@ void checkConnection() {
   
   if (!isconnectedtoserver) {
     if (!restartEthernet()) {
+      // se reinicia ethernet, se reconecta la red y se consulta el DNS server
       Serial1.println("\tNo conecta");
       return;
     }
@@ -405,7 +414,7 @@ void checkConnection() {
     }
   }
   
-  if (!client.connected()) {
+  if (!client.connected()) { // se intenta reconectar al servidor
     isconnectedtoserver = false;
     isauthenticated = false;
     client.flush();
@@ -1379,22 +1388,31 @@ void processingMeasRequest(long int MAC1,long int MAC2) {
 }
 
 boolean restartEthernet() {
-  boolean dhcp_ready = false;
+  #if (DHCP) 
+    boolean dhcp_ready = false;  
+  #else
+    boolean dhcp_ready = true;  
+  #endif
+  
   boolean server_resolve = false;
   
   Serial1.println("\t(FORCING ETHERNET RESET)");
   digitalWrite(Ethernet_reset_pin,LOW); // put reset pin to low ==> reset the ethernet shield
   delay(200);
   digitalWrite(Ethernet_reset_pin,HIGH); // set it back to high
-  delay(5000);
   client.stop();
-  EthernetDHCP.begin(mac,1);
-  //client.stop();
-  //EthernetDHCP.begin(mac,1);
-  //Ethernet.begin();
+  #if (DHCP)
+    EthernetDHCP.begin(mac,1);
+  #else
+    Ethernet.begin(mac, ip);
+  #endif
+  
   for (int r=0;r<10;r++) {
     Serial1.println(r,DEC);
-    dhcp_ready = checkDHCP();
+    #if (DHCP)
+      dhcp_ready = checkDHCP();
+    #endif
+
     if (dhcp_ready) {
       break;
     }

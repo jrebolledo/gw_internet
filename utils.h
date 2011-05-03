@@ -3,6 +3,8 @@
 #include "WProgram.h"
 #define DEBUG false
 
+#define DHCP false
+
 //Definiciones para la inicializacion del timer
 #define INIT_TIMER_COUNT 0
 #define RESET_TIMER2 TCNT2 = INIT_TIMER_COUNT
@@ -17,6 +19,7 @@
 #define INTERVAL_ECHOS 120000
 #define MAX_MEASUREMENT_BUFFER 2 // maximum 2 asyncronous sensor with 6 measurement values each 
 #define MAX_SIGNALS_MEASUREMENT_BUFFER 6 // each packet contains 6 signals
+
 #define MAX_AGE_OF_A_MEASUREMENT_BEFORE_EXPIRE 1200000
 #define MAX_NODES 10
 #define ZB_TX_TRIES 5
@@ -41,12 +44,22 @@
 #define SERVER_RESOLVE_IP { 0,0,0,0 }
 #define SERVER_PORT 7081
 #define SERVER_MAC { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED }
-#define MY_LOCAL_IP { 192,168,0,118 } //{ 205,234,146,134 };
-#define GATEWAY_IP { 192,168,0, 1 }
-#define MASK_NETWORK {255,255,255,0}
-#define DNS_SERVER_GOOGLE_IP {8,8,8,8}
+
+#if (!DHCP)
+  #define MY_LOCAL_IP {172,30,112,40} //{ 205,234,146,134 };
+  //#define MY_LOCAL_IP {192,168,0,199} //{ 205,234,146,134 };
+  #define GATEWAY_IP {172,30,112,1}
+  //#define GATEWAY_IP {192,168,0,1}
+  #define MASK_NETWORK {255,255,255,0}
+  
+  #define DNS_SERVER_GOOGLE_IP {172,20,1,100}
+#else
+  #define DNS_SERVER_GOOGLE_IP {172,20,1,100}
+#endif
+
+
 #define SERVER_HOSTNAME "salcobrand.no-ip.info"
-#define SERVER_LAN_IP {192,168,0,106}
+//#define SERVER_LAN_IP {192,168,0,106}
 /////////// METHODS ////////////
 //MAXQ
 #define MAXQ_GET_VARIABLE_METHOD 98 // get a single param and send it back to gateway, (used for calibration porpuses)
@@ -148,7 +161,9 @@ void sendReset(); // envia msg de reset al servidor para comunicar que el gatewa
 void showNodesState(); // muestra los nodos que estan online
 void checkConnection(); // chequea si esta conectado y reconecta si no esta
 void softReset();
+#if (DHCP)
 boolean checkDHCP();
+#endif
 boolean restartEthernet();
 boolean resolveServerIP();
 

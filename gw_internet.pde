@@ -8,7 +8,9 @@
 #include "utils.h"
 #include <SdFat.h>
 #include <SdFatUtil.h>
-#include <EthernetDHCP.h>
+#if (DHCP)
+  #include <EthernetDHCP.h>
+#endif
 #include <EthernetDNS.h>
 
 /************************************/
@@ -16,9 +18,12 @@
 /************************************/
 
 byte mac[] = SERVER_MAC;
-//byte ip[] = LOCAL_IP;
-//byte gateway[] = GATEWAY_IP;
-//byte subnet[] = MASK_NETWORK;
+#if (!DHCP)
+  byte ip[] = MY_LOCAL_IP;
+  byte gateway[] = GATEWAY_IP;
+  byte subnet[] = MASK_NETWORK;
+#endif
+
 //byte server[] = { 205,234,146,134 }; // servidor jaime
 //byte server[] = { 192,168,0,168 }; // servidor jaime
 byte dnsServerIp[] = DNS_SERVER_GOOGLE_IP;
@@ -112,7 +117,11 @@ void setup() {
   Serial.begin(9600);  // ethernet
   Serial1.begin(9600); // consola
   Serial1.println("SETUP()...");
-    
+  
+  //#if (!DHCP)
+  //  Ethernet.begin(mac, ip);
+  //#endif
+  
   initializeStructs(); // clean nodedefintions
 
   EthernetDNS.setDNSServer(dnsServerIp);
