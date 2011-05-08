@@ -19,7 +19,7 @@ extern byte server[4];
 #if (!DHCP)
   extern byte ip[];
   extern byte gateway[];
-  extern byte sub[];
+  extern byte subnet[];
 #endif
 extern byte mac[];
 extern byte dnsServerIp[];
@@ -1178,7 +1178,13 @@ void processingASYNC(long int MAC1,long int MAC2, byte type) {
     
     for (byte t=0;t<MAX_SIGNALS_MEASUREMENT_BUFFER;t++) {
       if (inv) {
-        ppzigbee.params[1+t] = 255-(ppzigbee.params[1+t]>>shift); //         
+        if ((ppzigbee.params[1+t] == 255) || (ppzigbee.params[1+t] == 0)) {
+          return;
+        }
+        else {
+          ppzigbee.params[1+t] = 255-(ppzigbee.params[1+t]>>shift); //
+        }
+
       }
       else {
         ppzigbee.params[1+t] = (ppzigbee.params[1+t]>>shift); //         
@@ -1404,7 +1410,7 @@ boolean restartEthernet() {
   #if (DHCP)
     EthernetDHCP.begin(mac,1);
   #else
-    Ethernet.begin(mac, ip);
+    Ethernet.begin(mac,ip,gateway,subnet);
   #endif
   
   for (int r=0;r<10;r++) {

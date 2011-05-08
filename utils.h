@@ -46,11 +46,11 @@
 #define SERVER_MAC { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED }
 
 #if (!DHCP)
-  #define MY_LOCAL_IP {172,30,112,40} //{ 205,234,146,134 };
+  #define MY_LOCAL_IP {172,30,164,40} //{ 205,234,146,134 };
   //#define MY_LOCAL_IP {192,168,0,199} //{ 205,234,146,134 };
-  #define GATEWAY_IP {172,30,112,1}
+  #define GATEWAY_IP {172,30,164,1}
   //#define GATEWAY_IP {192,168,0,1}
-  #define MASK_NETWORK {255,255,255,0}
+  #define MASK_NETWORK {255,255,255,192}
   
   #define DNS_SERVER_GOOGLE_IP {172,20,1,100}
 #else

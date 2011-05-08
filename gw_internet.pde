@@ -118,9 +118,9 @@ void setup() {
   Serial1.begin(9600); // consola
   Serial1.println("SETUP()...");
   
-  //#if (!DHCP)
-  //  Ethernet.begin(mac, ip);
-  //#endif
+  #if (!DHCP)
+    Ethernet.begin(mac, ip, gateway, subnet);
+  #endif
   
   initializeStructs(); // clean nodedefintions
 
